@@ -9,9 +9,13 @@ on:
         default: "0"
 permissions:
   contents: write
+concurrency:
+  group: bigcity-watch
+  cancel-in-progress: false
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,5 +37,6 @@ jobs:
       - name: Commit state
         run: |
           git config user.name "bcv-watcher"; git config user.email "bcv-watcher@users.noreply.github.com"
+          [ -f state_bigcity.json ] || { echo "no state file yet"; exit 0; }
           git add state_bigcity.json
           git diff --cached --quiet || (git commit -m "Update Big City state" && git push)
