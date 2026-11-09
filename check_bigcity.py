@@ -12,7 +12,7 @@ import json, os, re, sys, urllib.request
 from pathlib import Path
 
 URL = os.environ.get("BCV_URL", "https://app.bigcityvolleyball.com/iframe/big-city-volleyball/tab/open-play")
-TOPIC = os.environ["NTFY_TOPIC"]
+TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
 STATE = Path("state_bigcity.json")
 DEBUG = os.environ.get("DEBUG") == "1"
 # Status-only lines are excluded from the session key so status changes aren't "new".
@@ -65,13 +65,16 @@ def extract_sessions(text: str) -> dict:
 
 
 def notify(title: str, body: str, tags: str = "volleyball"):
-    req = urllib.request.Request(
-        f"https://ntfy.sh/{TOPIC}", data=body.encode(),
-        headers={"Title": title.encode("utf-8"), "Tags": tags, "Click": "https://www.bigcityvolleyball.com/adult-open-play"})
+    # JSON publish API: safe for emoji/UTF-8 in the title (HTTP headers are not).
+    payload = json.dumps({"topic": TOPIC, "title": title, "message": body, "tags": [tags],
+                          "click": "https://www.bigcityvolleyball.com/adult-open-play"}).encode()
+    req = urllib.request.Request("https://ntfy.sh/", data=payload, headers={"Content-Type": "application/json"})
     urllib.request.urlopen(req, timeout=20)
 
 
 def main():
+    if not TOPIC:
+        sys.exit("NTFY_TOPIC is empty - add it as a repository variable (Settings > Secrets and variables > Actions > Variables)")
     sessions = extract_sessions(render_text())
     print(f"Found {len(sessions)} sessions")
     if not sessions:
@@ -84,7 +87,7 @@ def main():
         if new:
             shown = "\n".join(f"- {k}" for k in new[:12])
             more = f"\n...and {len(new) - 12} more" if len(new) > 12 else ""
-            notify(f"🏐 Big City: {len(new)} new open play sessions", shown + more)
+            notify(f"🏐 Big City: {len(new)} new open play session{'s' if len(new) != 1 else ''}", shown + more)
         seen |= set(sessions)
     else:
         seen = set(sessions)
