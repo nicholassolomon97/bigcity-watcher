@@ -15,8 +15,8 @@ URL = os.environ.get("BCV_URL", "https://app.bigcityvolleyball.com/iframe/big-ci
 TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
 STATE = Path("state_bigcity.json")
 DEBUG = os.environ.get("DEBUG") == "1"
-# Status-only lines are excluded from the session key so status changes aren't "new".
-STATUS_LINE = re.compile(r"^(waitlist|wait list|full|sold out|join|sign up|book|register|\d+\s+spots?(\s+left)?)$", re.I)
+# Lines that describe availability / attendance (they change over time), so they never go in the key.
+STATUS_LINE = re.compile(r"(waitlist|wait list|\bfull\b|sold out|filled|\d+\s+going|\d+\s+spots?|spots?\s+(left|open|available)|^(join|sign up|book|register)$)", re.I)
 # A line that looks like the start of a session (contains a time like 7:00 PM / 7pm).
 TIME_RE = re.compile(r"\b\d{1,2}(:\d{2})?\s?(am|pm)\b", re.I)
 # Optional: only alert for these venue/keyword substrings (comma-separated env). Empty = all.
@@ -57,7 +57,7 @@ def extract_sessions(text: str) -> dict:
             date = l
         if TIME_RE.search(l):
             block = lines[i:i + 5]
-            key = " | ".join([x for x in block[:4] if not STATUS_LINE.match(x)][:3])
+            key = " | ".join([x for x in block[:5] if not STATUS_LINE.search(x)][:3])
             if WATCH and not any(w in key.lower() for w in WATCH):
                 continue
             sessions[key] = True
@@ -65,7 +65,7 @@ def extract_sessions(text: str) -> dict:
 
 
 def notify(title: str, body: str, tags: str = "volleyball"):
-    # JSON publish API: safe for emoji/UTF-8 in the title (HTTP headers are not).
+    # JSON publish API (safe for UTF-8). The "volleyball" tag already shows as a 🏐 before the title.
     payload = json.dumps({"topic": TOPIC, "title": title, "message": body, "tags": [tags],
                           "click": "https://www.bigcityvolleyball.com/adult-open-play"}).encode()
     req = urllib.request.Request("https://ntfy.sh/", data=payload, headers={"Content-Type": "application/json"})
@@ -85,9 +85,8 @@ def main():
     if seen is not None:  # first run (or old-format state) just seeds, no alert
         new = sorted(k for k in sessions if k not in seen)
         if new:
-            shown = "\n".join(f"- {k}" for k in new[:12])
-            more = f"\n...and {len(new) - 12} more" if len(new) > 12 else ""
-            notify(f"🏐 Big City: {len(new)} new open play session{'s' if len(new) != 1 else ''}", shown + more)
+            print(f"{len(new)} new sessions: {new}")
+            notify("BCV New Open Play", "Tap to view the schedule")
         seen |= set(sessions)
     else:
         seen = set(sessions)
