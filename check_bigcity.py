@@ -2,7 +2,8 @@
 
 Renders the schedule iframe in headless Chromium (it is JS-loaded), turns the
 visible text into "sessions", diffs against state_bigcity.json, and pushes an
-ntfy notification when a session is NEW or a FULL session REOPENS.
+ntfy notification when NEW sessions appear (a new batch). One summary push per
+run; waitlist/reopen changes are ignored. State is a cumulative "seen" list.
 
 Heuristic parsing lives in extract_sessions() - tune it once you see a real
 run's debug output (set DEBUG=1, or see the uploaded artifact in Actions).
@@ -14,8 +15,8 @@ URL = os.environ.get("BCV_URL", "https://app.bigcityvolleyball.com/iframe/big-ci
 TOPIC = os.environ["NTFY_TOPIC"]
 STATE = Path("state_bigcity.json")
 DEBUG = os.environ.get("DEBUG") == "1"
-# Session lines with any of these words (case-insens.) count as FULL.
-FULL_WORDS = re.compile(r"\b(full|sold out|waitlist|wait list|no spots|0 spots)\b", re.I)
+# Status-only lines are excluded from the session key so status changes aren't "new".
+STATUS_LINE = re.compile(r"^(waitlist|wait list|full|sold out|join|sign up|book|register|\d+\s+spots?(\s+left)?)$", re.I)
 # A line that looks like the start of a session (contains a time like 7:00 PM / 7pm).
 TIME_RE = re.compile(r"\b\d{1,2}(:\d{2})?\s?(am|pm)\b", re.I)
 # Optional: only alert for these venue/keyword substrings (comma-separated env). Empty = all.
@@ -47,7 +48,7 @@ def render_text() -> str:
 
 
 def extract_sessions(text: str) -> dict:
-    """Return {session_key: is_full}. A session = a time line plus the next few lines."""
+    """Return {session_key: True}. A session = a time line plus the next few lines."""
     lines = [l.strip() for l in text.splitlines() if l.strip()]
     sessions, date = {}, ""
     date_re = re.compile(r"^(mon|tue|wed|thu|fri|sat|sun)[a-z]*,?\s", re.I)
@@ -56,10 +57,10 @@ def extract_sessions(text: str) -> dict:
             date = l
         if TIME_RE.search(l):
             block = lines[i:i + 5]
-            key = " | ".join([date] + block[:3])
+            key = " | ".join([x for x in block[:4] if not STATUS_LINE.match(x)][:3])
             if WATCH and not any(w in key.lower() for w in WATCH):
                 continue
-            sessions[key] = bool(FULL_WORDS.search(" ".join(block)))
+            sessions[key] = True
     return sessions
 
 
@@ -76,14 +77,18 @@ def main():
     if not sessions:
         print("WARNING: no sessions parsed - check debug output", file=sys.stderr)
         return  # don't clobber state on a bad render
-    old = json.loads(STATE.read_text()) if STATE.exists() else None
-    if old is not None:  # first run just seeds state, no alerts
-        for k, full in sessions.items():
-            if k not in old and not full:
-                notify("🏐 New Big City open play", k.replace(" | ", "\n"))
-            elif k in old and old[k] and not full:
-                notify("🏐 Spot reopened (Big City)", k.replace(" | ", "\n"))
-    STATE.write_text(json.dumps(sessions, indent=1, sort_keys=True))
+    raw = json.loads(STATE.read_text()) if STATE.exists() else None
+    seen = set(raw["seen"]) if isinstance(raw, dict) and "seen" in raw else None
+    if seen is not None:  # first run (or old-format state) just seeds, no alert
+        new = sorted(k for k in sessions if k not in seen)
+        if new:
+            shown = "\n".join(f"- {k}" for k in new[:12])
+            more = f"\n...and {len(new) - 12} more" if len(new) > 12 else ""
+            notify(f"🏐 Big City: {len(new)} new open play sessions", shown + more)
+        seen |= set(sessions)
+    else:
+        seen = set(sessions)
+    STATE.write_text(json.dumps({"seen": sorted(seen)}, indent=1))
 
 
 if __name__ == "__main__":
