@@ -20,7 +20,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: pip install playwright && playwright install --with-deps chromium
+      - name: Install Playwright (with retry)
+        run: |
+          pip install playwright
+          for i in 1 2 3; do
+            timeout 180 playwright install --with-deps chromium && break
+            echo "install attempt $i failed or timed out; retrying"; sleep 5
+          done
       - name: Check
         env:
           NTFY_TOPIC: ${{ vars.NTFY_TOPIC }}
