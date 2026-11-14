@@ -33,13 +33,13 @@
   "Sun Nov 22 1:30 PM - 5:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies",
   "Sun Nov 22 1:30 PM - 5:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies"
  ],
- "missing": {
-  "Fri Nov 13 7:30 PM - 10:15 PM EST | $26.00 | Advanced Co Ed Open Play | Information Technology High School": 1,
-  "Fri Nov 13 6:30 PM - 10:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies": 1,
-  "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | Limited Spots": 1,
-  "Fri Nov 13 7:30 PM - 10:15 PM EST | $26.00 | Advanced Co Ed Open Play | Limited Spots": 1,
-  "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | Limited Spots": 1,
-  "Fri Nov 13 6:30 PM - 10:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies": 1
- },
- "removed": []
+ "missing": {},
+ "removed": [
+  "Fri Nov 13 6:30 PM - 10:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies",
+  "Fri Nov 13 6:30 PM - 10:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies",
+  "Fri Nov 13 7:30 PM - 10:15 PM EST | $26.00 | Advanced Co Ed Open Play | Information Technology High School",
+  "Fri Nov 13 7:30 PM - 10:15 PM EST | $26.00 | Advanced Co Ed Open Play | Limited Spots",
+  "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | Limited Spots",
+  "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | Limited Spots"
+ ]
 }
