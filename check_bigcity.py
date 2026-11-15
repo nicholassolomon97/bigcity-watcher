@@ -17,7 +17,9 @@ TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
 STATE = Path("state_bigcity.json")
 DEBUG = os.environ.get("DEBUG") == "1"
 # Lines that describe availability / attendance (they change over time), so they never go in the key.
-STATUS_LINE = re.compile(r"(waitlist|wait list|\bfull\b|sold out|filled|\d+\s+going|\d+\s+spots?|spots?\s+(left|open|available)|^(join|sign up|book|register)$)", re.I)
+STATUS_LINE = re.compile(r"(waitlist|wait list|\bfull\b|sold out|filled|\blimited\b|\d+\s+going|\d+\s+spots?|spots?\s+(left|open|available)|^(join|sign up|book|register)$)", re.I)
+# Avatar initials ("ZW") and "+18" counters that follow the venue line.
+AVATAR_LINE = re.compile(r"^([A-Z]{1,3}|\+\d+)$")
 # A line that looks like the start of a session (contains a time like 7:00 PM / 7pm).
 TIME_RE = re.compile(r"\b\d{1,2}(:\d{2})?\s?(am|pm)\b", re.I)
 # Optional: only alert for these venue/keyword substrings (comma-separated env). Empty = all.
@@ -120,8 +122,11 @@ def extract_sessions(text: str) -> dict:
         if date_re.match(l) and not TIME_RE.search(l):
             date = l
         if TIME_RE.search(l):
-            block = lines[i:i + 5]
-            key = " | ".join([x for x in block[:5] if not STATUS_LINE.search(x)][:3])
+            # Page layout per session: "<date/time> | $<price>", name, badges/status lines, venue, avatars.
+            name = lines[i + 1] if i + 1 < len(lines) else ""
+            venue = next((x for x in lines[i + 2:i + 8]
+                          if not STATUS_LINE.search(x) and not AVATAR_LINE.match(x) and not TIME_RE.search(x)), "")
+            key = " | ".join(x for x in (l, name, venue) if x)
             if WATCH and not any(w in key.lower() for w in WATCH):
                 continue
             sessions[key] = True
