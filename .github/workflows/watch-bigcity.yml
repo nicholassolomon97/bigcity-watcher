@@ -15,7 +15,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,10 +23,16 @@ jobs:
       - name: Install Playwright (with retry)
         run: |
           pip install playwright
+          ok=0
           for i in 1 2 3; do
-            timeout 180 playwright install --with-deps chromium && break
-            echo "install attempt $i failed or timed out; retrying"; sleep 5
+            if timeout -k 10 150 playwright install --with-deps chromium; then ok=1; break; fi
+            echo "install attempt $i failed or timed out; clearing any stuck apt/dpkg and retrying"
+            sudo pkill -9 apt-get || true
+            sudo pkill -9 dpkg || true
+            sudo dpkg --configure -a || true
+            sleep 5
           done
+          [ "$ok" = 1 ] || { echo "Playwright install failed after 3 attempts"; exit 1; }
       - name: Check
         env:
           NTFY_TOPIC: ${{ vars.NTFY_TOPIC }}
