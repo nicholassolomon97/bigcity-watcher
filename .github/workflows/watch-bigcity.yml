@@ -20,19 +20,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - name: Install Playwright (with retry)
+      - name: Install Playwright (no apt unless needed)
         run: |
           pip install playwright
-          ok=0
+          # The runner already has the browser's system libraries; only the Chromium download is needed.
+          # (--with-deps also apt-installs fonts, which hangs on the Ubuntu mirror and isn't needed for text.)
           for i in 1 2 3; do
-            if timeout -k 10 150 playwright install --with-deps chromium; then ok=1; break; fi
-            echo "install attempt $i failed or timed out; clearing any stuck apt/dpkg and retrying"
-            sudo pkill -9 apt-get || true
-            sudo pkill -9 dpkg || true
-            sudo dpkg --configure -a || true
-            sleep 5
+            timeout -k 10 120 playwright install chromium && break
+            echo "browser download attempt $i failed or timed out; retrying"; sleep 5
           done
-          [ "$ok" = 1 ] || { echo "Playwright install failed after 3 attempts"; exit 1; }
+          launch_test='from playwright.sync_api import sync_playwright as s; p=s().start(); p.chromium.launch().close(); p.stop(); print("browser launch OK")'
+          if ! python -c "$launch_test"; then
+            echo "Browser failed to launch - installing system dependencies as a fallback"
+            sudo pkill -9 apt-get || true; sudo pkill -9 dpkg || true; sudo dpkg --configure -a || true
+            timeout -k 10 240 playwright install-deps chromium
+            python -c "$launch_test"
+          fi
       - name: Check
         env:
           NTFY_TOPIC: ${{ vars.NTFY_TOPIC }}
