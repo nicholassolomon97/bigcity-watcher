@@ -73,10 +73,7 @@
   "Wed Nov 25 7:30 PM - 10:15 PM EST | $26.00 | Advanced Co Ed Open Play | Information Technology High School",
   "Wed Nov 25 7:30 PM - 10:30 PM EST | $26.00 | Women's Open Play | York Preparatory School"
  ],
- "missing": {
-  "Sat Nov 21 4:30 PM - 8:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies": 1,
-  "Sat Nov 21 4:30 PM - 8:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies": 1
- },
+ "missing": {},
  "removed": [
   "Fri Nov 13 6:30 PM - 10:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies",
   "Fri Nov 13 6:30 PM - 10:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies",
@@ -90,6 +87,8 @@
   "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | Limited Spots",
   "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies",
   "Sat Nov 14 4:30 PM - 8:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | Limited Spots",
+  "Sat Nov 21 4:30 PM - 8:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies",
+  "Sat Nov 21 4:30 PM - 8:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies",
   "Sun Nov 15 1:30 PM - 5:00 PM EST | $26.00 | Advanced Co Ed Open Play - Left Court | High School for Environmental Studies",
   "Sun Nov 15 1:30 PM - 5:00 PM EST | $26.00 | Intermediate Co Ed Open Play - Right Court | High School for Environmental Studies"
  ]
